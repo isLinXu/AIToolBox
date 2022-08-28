@@ -1,5 +1,7 @@
 import moviepy.editor as mp
 
+import moviepy.editor as mp
+
 import auditok
 import os
 
@@ -14,9 +16,10 @@ def extract_audio(videos_file_path):
     return new_path
 
 
-def qiefen(path, temp_path, ty='video', mmin_dur=1, mmax_dur=100000, mmax_silence=1, menergy_threshold=55):
+def qiefen(path, ty='video', mmin_dur=1, mmax_dur=100000, mmax_silence=1, menergy_threshold=55):
+    global mk, file_pre
     file = path
-    m_times = 30.0
+
     audio_regions = auditok.split(
         file,
         min_dur=mmin_dur,  # minimum duration of a valid audio event in seconds
@@ -27,15 +30,15 @@ def qiefen(path, temp_path, ty='video', mmin_dur=1, mmax_dur=100000, mmax_silenc
     )
 
     for i, r in enumerate(audio_regions):
-        print('i', i, 'r', r)
         # Regions returned by `split` have 'start' and 'end' metadata fields
         print(
             "Region {i}: {r.meta.start:.3f}s -- {r.meta.end:.3f}s".format(i=i, r=r))
+
         epath = ''
         file_pre = str(epath.join(file.split('.')[0].split('/')[-1]))
 
-        mk = '/change'
-        mk = temp_path + mk
+        # mk = '/change'
+        mk = '/media/linxu/mobilePan/AICA6首席架构师计划/QA/change'
         if (os.path.exists(mk) == False):
             os.mkdir(mk)
         if (os.path.exists(mk + '/' + ty) == False):
@@ -52,34 +55,13 @@ def qiefen(path, temp_path, ty='video', mmin_dur=1, mmax_dur=100000, mmax_silenc
 
         filename = r.save(file_save)
         print("region saved as: {}".format(filename))
-        # if float(r - i) > float(m_times):
-        #     epath = ''
-        #     file_pre = str(epath.join(file.split('.')[0].split('/')[-1]))
-        #
-        #     # mk = '/change'
-        #     mk = '/media/hxzh02/mobilePan/AICA6首席架构师计划/预科班/change'
-        #     if (os.path.exists(mk) == False):
-        #         os.mkdir(mk)
-        #     if (os.path.exists(mk + '/' + ty) == False):
-        #         os.mkdir(mk + '/' + ty)
-        #     if (os.path.exists(mk + '/' + ty + '/' + file_pre) == False):
-        #         os.mkdir(mk + '/' + ty + '/' + file_pre)
-        #
-        #     num = i
-        #     # 为了取前三位数字排序
-        #     s = '000000' + str(num)
-        #
-        #     file_save = mk + '/' + ty + '/' + file_pre + '/' + \
-        #                 s[-3:] + '-' + '{meta.start:.3f}-{meta.end:.3f}' + '.wav'
-        #
-        #     filename = r.save(file_save)
-        #     print("region saved as: {}".format(filename))
-
-    return mk + '/' + ty + '/' + file_pre
+    o_path = mk + '/' + ty + '/' + file_pre
+    return o_path
 
 
 import paddle
-from paddlespeech.cli import ASRExecutor, TextExecutor
+from paddlespeech.cli.asr import ASRExecutor
+from paddlespeech.cli.text import TextExecutor
 
 import warnings
 
@@ -124,20 +106,16 @@ def txt2csv(txt):
 
 
 if __name__ == '__main__':
-    mp4_path = '/media/hxzh02/mobilePan/AICA6首席架构师计划/正式班/1-1-AICA6-深度学习再认识.mp4'
-    temp_path = '/media/hxzh02/mobilePan/AICA6首席架构师计划/正式班/'
     # 拿到新生成的音频的路径
-    path = extract_audio(mp4_path)
+    path = extract_audio('/media/linxu/mobilePan/AICA6首席架构师计划/QA/《跨上AI的战车》QA视频.mp4')
     # 划分音频
-    path = qiefen(path=path, temp_path=temp_path, ty='video0',
-                  mmin_dur=1, mmax_dur=30, mmax_silence=1,
-                  menergy_threshold=55)
+    path = qiefen(path=path, ty='video30', mmin_dur=0.5, mmax_dur=30, mmax_silence=0.5, menergy_threshold=55)
     # 音频转文本  需要GPU
     txt_all = audio2txt(path)
 
     # 存储文本
-    with open('Text Result.txt', 'w') as f:  # 设置文件对象
-        print('Text Result: \n{}'.format(txt_all))
+    # with open('Text Result.txt', 'w') as f:  # 设置文件对象
+        # print('Text Result: \n{}'.format(txt_all))
 
     # 存入csv
     txt2csv(txt_all)
